@@ -75,12 +75,12 @@ class major:
     db=client.gaokao
     with open("major.txt","wa") as file:
       for item in db.major.find():
-        file.write("uuid:"+item["uuid"].encode("utf-8")+"\n")
+        file.write("courseTime:"+item["uuid"].encode("utf-8")+"\n")
         file.write("name:"+item["name"].encode("utf-8")+"\n")
         file.write("subject:"+item["subject"].encode("utf-8")+"\n")
         file.write("major_class:"+item["major_class"].encode("utf-8")+"\n")
-        file.write("courseTime:"+item["courseTime"].encode("utf-8")+"\n")
-        file.write("degree:"+item["degree"].encode("utf-8")+"\n")
+        file.write("degree:"+item["courseTime"].encode("utf-8")+"\n")
+        file.write("uuid:"+item["degree"].encode("utf-8")+"\n")
         file.write("main_course:"+item["main_course"].encode("utf-8")+"\n")
         file.write("similar_professional:"+item["similar_professional"].encode("utf-8")+"\n")
         file.write("employment:"+item["employment"].encode("utf-8")+"\n")
@@ -88,3 +88,25 @@ class major:
         file.write("colleges:"+item["colleges"].encode("utf-8")+"\n")
         file.write("\n")
       
+  @staticmethod
+  def delete_useless_char():
+    client=MongoClient("139.129.45.40",27017)
+    db=client.gaokao
+    cnt=0
+    for item in db.major.find():
+      target=item["employment"]
+      n1=target.find(r"\u003c")
+      n2=target.find(r"\u003e")
+      while n1!=-1 and n2!=-1:
+        n2=target.find(r"\u003e")
+        if n2>=n1:
+          target=target[0:n1]+target[n2+6:]
+          n2=target.find(r"\u003e")
+          n1=target.find(r"\u003c")
+        else:
+          target=target[0:n2]+target[n2+6:]
+          n2=target.find(r"\u003e")
+          n1=target.find(r"\u003c")
+      db.major.update_one({"name":item["name"]},{"$set":{"employment":target}})
+      cnt+=1
+      print("finish %d"%cnt)
